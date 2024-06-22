@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-import { VRFCoordinatorV2Interface } from "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
-import { VRFConsumerBaseV2 } from "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
+import {VRFCoordinatorV2Interface} from "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
+import {VRFConsumerBaseV2} from "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 
 /**
  * @title A simple raffle contract
@@ -15,7 +15,10 @@ contract Raffle is VRFConsumerBaseV2 {
     error Raffle__WinnerWithrawFailed();
     error Raffle__NotOpen();
 
-    enum RaffleState { OPEN, CALCULATING }
+    enum RaffleState {
+        OPEN,
+        CALCULATING
+    }
 
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
     uint32 private constant NUM_OF_WORDS = 1;
@@ -56,7 +59,7 @@ contract Raffle is VRFConsumerBaseV2 {
 
     function enterRaffle() public payable {
         if (msg.value < i_entranceFee) revert Raffle__NotEnoughEthSent();
-        if(s_raffleState != RaffleState.OPEN) revert Raffle__NotOpen();
+        if (s_raffleState != RaffleState.OPEN) revert Raffle__NotOpen();
 
         s_players.push(payable(msg.sender));
 
@@ -84,8 +87,8 @@ contract Raffle is VRFConsumerBaseV2 {
 
         emit WinnerPicked(winner);
 
-        (bool success, ) = winner.call{value: address(this).balance}("");
-        if(!success) revert Raffle__WinnerWithrawFailed();
+        (bool success,) = winner.call{value: address(this).balance}("");
+        if (!success) revert Raffle__WinnerWithrawFailed();
     }
 
     function getEntranceFee() public view returns (uint256) {
