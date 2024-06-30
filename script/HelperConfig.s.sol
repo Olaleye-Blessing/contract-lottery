@@ -2,7 +2,7 @@
 pragma solidity ^0.8.18;
 
 import { Script } from "forge-std/Script.sol";
-import { VRFCoordinatorV2Mock } from "@chainlink-brownie-contracts/contracts/src/v0.8/mocks/VRFCoordinatorV2Mock.sol";
+import { VRFCoordinatorV2Mock } from "@chainlink/contracts/src/v0.8/mocks/VRFCoordinatorV2Mock.sol";
 
 abstract contract CodeConstants {
   // VRF mock values
@@ -39,6 +39,10 @@ contract HelperConfig is Script, CodeConstants {
     } else {
       revert HelperConfig__InvalidChainID();
     }
+  }
+
+  function getConfig() public returns(NetworkConfig memory) {
+    return getConfigByChainId(block.chainid);
   }
 
   function getOrCreateAnvilEthConfig() public returns(NetworkConfig memory) {
