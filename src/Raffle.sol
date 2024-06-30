@@ -66,10 +66,40 @@ contract Raffle is VRFConsumerBaseV2 {
         emit EnteredRaffle(msg.sender);
     }
 
-    function pickWinner() public {
-        if ((block.timestamp - s_lastTimeStamp) < i_interval) {
-            revert();
-        }
+    // when should winner be picked
+    /**
+    * @dev This is the function the chainlink nodes will call to see if the lottery is ready to pick a winner.
+    * The following should be true in order for upkeepNeeded to be true:
+    * 1. The time interval has passed between raffle runs
+    * 2. The lottery is open
+    * 3. The contract has ETH
+    * 4. Implicitly, your subscription has LINK
+    * @param - ignored
+    * @return upkeepNeeded - true if it's time to restart the lottery
+    * @return - ignored 
+    */
+    function checkUpkeep( 
+        bytes memory /* checkData */ // turning checkData to comment means the argument is not used in the function
+    )
+        public
+        view
+        returns (bool upkeepNeeded, bytes memory /* performData */)
+    {
+        bool timeHasPassed = (block.timestamp - s_lastTimeStamp) >= i_interval;
+        bool isOpen = s_raffleState == RaffleState.OPEN;
+        bool hasBalance = address(this).balance > 0;
+        bool hasPlayers = s_players.length > 0;
+        
+        upkeepNeeded = timeHasPassed && isOpen && hasBalance && hasPlayers;
+
+        return (upkeepNeeded, "");
+
+    }
+
+    function performUpkeep(bytes calldata /* performData */) external {
+        (bool upkeepNeeded, ) = checkUpkeep("");
+        if(!upkeepNeeded) revert();
+        
         s_raffleState = RaffleState.CALCULATING;
         uint256 requestId = i_vrfCoordinator.requestRandomWords(
             i_gasLane, i_subscriptionId, REQUEST_CONFIRMATIONS, i_callbackGasLimit, NUM_OF_WORDS
