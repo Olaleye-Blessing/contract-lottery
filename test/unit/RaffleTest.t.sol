@@ -32,7 +32,7 @@ contract RaffleTest is Test {
         interval = config.interval;
         vrfCoordinator = config.vrfCoordinator;
         gasLane = config.gasLane;
-        subscriptionId = config.subscriptionId;
+        subscriptionId = uint64(config.subscriptionId);
         callbackGasLimit = config.callbackGasLimit;
 
         vm.deal(PLAYER, STARTING_PLAYER_BALANCE);
@@ -60,6 +60,23 @@ contract RaffleTest is Test {
         vm.prank(PLAYER);
         vm.expectEmit(true, false, false, false, address(raffle));
         emit EnteredRaffle(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+    }
+
+    function test_dontAllowPlayersToEnterWhileRaffleIsCalculating() public {
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+
+        // increase the time interval so as to allow entrance
+        vm.warp(block.timestamp + interval + 1);
+        // this is not compulsory
+        vm.roll(block.number + 1);
+
+        // performUpkeep will set the raffle state to calculating
+        raffle.performUpkeep("");
+
+        vm.expectRevert(Raffle.Raffle__NotOpen.selector);
+        vm.prank(PLAYER);
         raffle.enterRaffle{value: entranceFee}();
     }
 }
